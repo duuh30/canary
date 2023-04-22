@@ -60,6 +60,7 @@ GameStore.ActionType = {
 	OPEN_CATEGORY = 2,
 	OPEN_USEFUL_THINGS = 3,
 	OPEN_OFFER = 4,
+	SEARCH_OFFER = 5,
 }
 
 GameStore.CointType = {
@@ -307,6 +308,7 @@ function parseRequestStoreOffers(playerId, msg)
 	end
 
 	local actionType = msg:getByte()
+	print(actionType)
 	if actionType == GameStore.ActionType.OPEN_CATEGORY then
 		local categoryName = msg:getString()
 		local category = GameStore.getCategoryByName(categoryName)
@@ -352,6 +354,27 @@ function parseRequestStoreOffers(playerId, msg)
 		local category = GameStore.getCategoryByOffer(offerId)
 		if category then
 			addPlayerEvent(sendShowStoreOffers, 50, playerId, category, offerId)
+		end
+	elseif actionType == GameStore.ActionType.SEARCH_OFFER then
+		openStore(playerId, true);
+
+		if category then
+			local msg = NetworkMessage()
+			local haveSaleOffer = 0
+			msg:addByte(GameStore.SendingPackets.S_StoreOffers)
+			msg:addString("Search Results")
+
+			msg:addU32(0)
+
+			msg:addByte(0) -- Window Type
+			msg:addByte(0) -- Collections Size
+			msg:addU16(0) -- Collection Name
+
+			local player = Player(playerId)
+
+			msg:addU16(1)
+
+			msg:sendToPlayer(player)
 		end
 	end
 end
@@ -476,16 +499,14 @@ local function getCategoriesRook()
 end
 
 --==Sending==--
-function openStore(playerId)
+function openStore(playerId, withSearch)
 	local player = Player(playerId)
 	if not player then
 		return false
 	end
-
 	if not GameStore.Categories then
 		return false
 	end
-
 	local msg = NetworkMessage()
 	msg:addByte(GameStore.SendingPackets.S_OpenStore)
 
@@ -495,7 +516,16 @@ function openStore(playerId)
 	else
 		GameStoreCategories, GameStoreCount = GameStore.Categories, #GameStore.Categories
 	end
+	if withSearch == true then
+		GameStoreCount = GameStoreCount + 1;
 
+		local searchResultsMenu = {
+			icons = { "Search_Results.png" },
+			name = "Search Results",
+		}
+
+		table.insert(GameStoreCategories,searchResultsMenu)
+	end
 	if (GameStoreCategories) then
 		msg:addU16(GameStoreCount)
 		for k, category in ipairs(GameStoreCategories) do
@@ -959,6 +989,19 @@ GameStore.getCategoryByName = function(name)
 				return GameStore.getCategoryByName(category.subclasses[1])
 			end
 			return category
+		end
+	end
+	return nil
+end
+
+GameStore.getCategoryBySearch = function(text)
+	for k, category in ipairs(GameStore.Categories) do
+		if category.offers then
+			for Off_k, offer in ipairs(category.offers) do
+				if offer.name:lower():match(text) ~= nil then
+					return category;
+				end
+			end
 		end
 	end
 	return nil
