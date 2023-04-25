@@ -308,7 +308,6 @@ function parseRequestStoreOffers(playerId, msg)
 	end
 
 	local actionType = msg:getByte()
-	print(actionType)
 	if actionType == GameStore.ActionType.OPEN_CATEGORY then
 		local categoryName = msg:getString()
 		local category = GameStore.getCategoryByName(categoryName)
@@ -356,26 +355,32 @@ function parseRequestStoreOffers(playerId, msg)
 			addPlayerEvent(sendShowStoreOffers, 50, playerId, category, offerId)
 		end
 	elseif actionType == GameStore.ActionType.SEARCH_OFFER then
-		openStore(playerId, true);
+		openStore(playerId, false);
 
-		if category then
-			local msg = NetworkMessage()
-			local haveSaleOffer = 0
-			msg:addByte(GameStore.SendingPackets.S_StoreOffers)
-			msg:addString("Search Results")
+		category = {
+			name = "Search Results ",
+			offers = {
+				{
+					icons = { "Magic_Gold_Converter.png" },
+					name = "Magic Gold Converter",
+					price = 15,
+					itemtype = 28525,
+					charges = 500,
+					description = "<i>Changes automatically either a stack of 100 gold pieces into 1 platinum coin, or a stack of 100 platinum coins into 1 crystal coin!</i>\n\n{character}\n{storeinbox}\n{useicon} use it to activate or deactivate the automatic conversion\n{info} converts all stacks of 100 gold or platinum in the inventory whenever it is activated\n{info} deactivated upon purchase\n{info} usable for 500 conversions a piece",
+					type = GameStore.OfferTypes.OFFER_TYPE_CHARGES,
+				},
+				{
+					icons = { "Prey_Bonus_Reroll.png" },
+					name = "Prey Wildcard",
+					price = 50,
+					count = 20,
+					description = "<i>Use Prey Wildcards to reroll the bonus of an active prey, to lock your active prey or to select a prey of your choice.</i>\n\n{character}\n{info} added directly to Prey dialog\n{info} maximum amount that can be owned by character: 50",
+					type = GameStore.OfferTypes.OFFER_TYPE_PREYBONUS,
+				},
+			}
+		}
 
-			msg:addU32(0)
-
-			msg:addByte(0) -- Window Type
-			msg:addByte(0) -- Collections Size
-			msg:addU16(0) -- Collection Name
-
-			local player = Player(playerId)
-
-			msg:addU16(1)
-
-			msg:sendToPlayer(player)
-		end
+		addPlayerEvent(sendShowStoreOffers, 50, playerId, category)
 	end
 end
 
@@ -521,7 +526,7 @@ function openStore(playerId, withSearch)
 
 		local searchResultsMenu = {
 			icons = { "Search_Results.png" },
-			name = "Search Results",
+			name = "Search Results ",
 		}
 
 		table.insert(GameStoreCategories,searchResultsMenu)
