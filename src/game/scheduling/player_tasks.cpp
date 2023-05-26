@@ -26,22 +26,23 @@ void PlayerDispatcher::threadMain(int index) {
 
 		if (!taskListThread.empty()) {
 			// take the first task
-            PlayerTask* task = taskListThread.front();
-            taskListThread.pop_front();
-            taskLockUnique.unlock();
+			PlayerTask* task = taskListThread.front();
+			taskListThread.pop_front();
+			taskLockUnique.unlock();
 
-            if (!task->hasExpired()) {
-                std::thread::id this_id = std::this_thread::get_id();
-                std::cout << "thread " << this_id << " executing... | " << " by index" << index << "\n";
-                ++dispatcherCycle;
-                (*task)();
-            }
+			if (!task->hasExpired()) {
+				std::thread::id this_id = std::this_thread::get_id();
+				std::cout << "thread " << this_id << " executing... | "
+						  << " by index" << index << "\n";
+				++dispatcherCycle;
+				(*task)();
+			}
 
-            delete task;
-        } else {
-            taskLockUnique.unlock();
-        }
-    }
+			delete task;
+		} else {
+			taskLockUnique.unlock();
+		}
+	}
 }
 
 void PlayerDispatcher::playerAddTask(PlayerTask* task, int index, bool push_front /*= false*/) {

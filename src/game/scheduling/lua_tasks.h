@@ -15,12 +15,14 @@
 class LuaTask : public Task {
 	public:
 		explicit LuaTask(std::function<void(void)> &&f) :
-            Task(std::move(f)) { }
+			Task(std::move(f)) { }
 
-        LuaTask(uint32_t ms, std::function<void(void)> &&f) :
-            Task(ms, std::move(f)) { }
+		LuaTask(uint32_t ms, std::function<void(void)> &&f) :
+			Task(ms, std::move(f)) { }
+
 	protected:
 		std::chrono::system_clock::time_point expiration = SYSTEM_TIME_ZERO;
+
 	private:
 		// Expiration has another meaning for scheduler tasks,
 		// then it is the time the task should be added to the

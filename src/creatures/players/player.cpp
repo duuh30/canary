@@ -36,11 +36,11 @@ Player::Player(ProtocolGame_ptr p) :
 	client(std::move(p)) {
 	inbox->incrementReferenceCounter();
 	events = new Events();
-
 }
 
 Player::~Player() {
-	std::cout << "Destrutor chamado" << "\n";
+	std::cout << "Destrutor chamado"
+			  << "\n";
 	for (Item* item : inventory) {
 		if (item) {
 			item->setParent(nullptr);
