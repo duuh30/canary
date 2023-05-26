@@ -42,7 +42,11 @@ void Scheduler::threadMain() {
 			eventLockUnique.unlock();
 
 			task->setDontExpire();
-			g_dispatcher().addTask(task, true);
+			if (dynamic_cast<LuaSchedulerTask*>(task)) {
+				g_luaDispatcher().addTask(task, true);
+			} else {
+				g_dispatcher().addTask(task, true);
+			}
 		} else {
 			eventLockUnique.unlock();
 		}
@@ -122,4 +126,8 @@ void Scheduler::shutdown() {
 
 SchedulerTask* createSchedulerTask(uint32_t delay, std::function<void(void)> f) {
 	return new SchedulerTask(delay, std::move(f));
+}
+
+LuaSchedulerTask* createLuaSchedulerTask(uint32_t delay, std::function<void(void)> f) {
+	return new LuaSchedulerTask(delay, std::move(f));
 }

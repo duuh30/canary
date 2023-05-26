@@ -35,9 +35,12 @@ Player::Player(ProtocolGame_ptr p) :
 	inbox(new Inbox(ITEM_INBOX)),
 	client(std::move(p)) {
 	inbox->incrementReferenceCounter();
+	events = new Events();
+
 }
 
 Player::~Player() {
+	std::cout << "Destrutor chamado" << "\n";
 	for (Item* item : inventory) {
 		if (item) {
 			item->setParent(nullptr);
@@ -78,6 +81,7 @@ Player::~Player() {
 	setWriteItem(nullptr);
 	setEditHouse(nullptr);
 	logged = false;
+	delete events;
 }
 
 void Player::setThread() {

@@ -17,6 +17,7 @@
 #include "game/game.h"
 #include "game/scheduling/scheduler.h"
 #include "game/scheduling/player_tasks.h"
+#include "game/scheduling/lua_tasks.h"
 #include "game/scheduling/events_scheduler.hpp"
 #include "io/iomarket.h"
 #include "lua/creature/events.h"
@@ -215,6 +216,7 @@ int main(int argc, char* argv[]) {
 	ServiceManager serviceManager;
 
 	g_dispatcher().start();
+	g_luaDispatcher().start();
 	g_playerDispatcher().start(6); // numero de threads para ser utilizado TESTES pode ser via construtor tambem
 	g_scheduler().start();
 
@@ -231,6 +233,7 @@ int main(int argc, char* argv[]) {
 		SPDLOG_ERROR("No services running. The server is NOT online!");
 		g_databaseTasks().shutdown();
 		g_dispatcher().shutdown();
+		g_luaDispatcher().shutdown();
 		g_playerDispatcher().shutdown();
 		exit(-1);
 	}
@@ -238,6 +241,7 @@ int main(int argc, char* argv[]) {
 	g_scheduler().join();
 	g_databaseTasks().join();
 	g_dispatcher().join();
+	g_luaDispatcher().join();
 	g_playerDispatcher().join();
 	return 0;
 }

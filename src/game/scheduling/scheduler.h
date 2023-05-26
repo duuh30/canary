@@ -11,12 +11,15 @@
 #define SRC_GAME_SCHEDULING_SCHEDULER_H_
 
 #include "game/scheduling/tasks.h"
+#include "game/scheduling/lua_tasks.h"
 #include "utils/thread_holder_base.h"
 
 static constexpr int32_t SCHEDULER_MINTICKS = 50;
 
 class SchedulerTask : public Task {
 	public:
+		SchedulerTask(uint32_t delay, std::function<void(void)> &&f) :
+			Task(delay, std::move(f)) { }
 		void setEventId(uint32_t id) {
 			eventId = id;
 		}
@@ -29,15 +32,21 @@ class SchedulerTask : public Task {
 		}
 
 	private:
-		SchedulerTask(uint32_t delay, std::function<void(void)> &&f) :
-			Task(delay, std::move(f)) { }
-
 		uint32_t eventId = 0;
 
 		friend SchedulerTask* createSchedulerTask(uint32_t, std::function<void(void)>);
 };
 
 SchedulerTask* createSchedulerTask(uint32_t delay, std::function<void(void)> f);
+
+class LuaSchedulerTask : public SchedulerTask {
+	private:
+		LuaSchedulerTask(uint32_t delay, std::function<void(void)> &&f) :
+			SchedulerTask(delay, std::move(f)) { }
+		friend LuaSchedulerTask* createLuaSchedulerTask(uint32_t, std::function<void(void)>);
+};
+
+LuaSchedulerTask* createLuaSchedulerTask(uint32_t delay, std::function<void(void)> f);
 
 struct TaskComparator {
 		bool operator()(const SchedulerTask* lhs, const SchedulerTask* rhs) const {

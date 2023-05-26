@@ -249,9 +249,11 @@ void Creature::addEventWalk(bool firstStep) {
 	}
 
 	// Take first step right away, but still queue the next
-	if (ticks == 1) {
-		g_game().checkCreatureWalk(getID());
-	}
+	g_dispatcher().addTask(createTask([&]() {
+		if (ticks == 1) {
+			g_game().checkCreatureWalk(getID());
+		}
+	}));
 
 	eventWalk = g_scheduler().addEvent(createSchedulerTask(static_cast<uint32_t>(ticks), std::bind(&Game::checkCreatureWalk, &g_game(), getID())));
 }

@@ -68,7 +68,7 @@ class PlayerDispatcher : public PlayerThreadHolder<PlayerDispatcher> {
 			return instance;
 		}
 
-		void playerAddTask(PlayerTask* task, int index, bool push_front = false);
+		void playerAddTask(PlayerTask* task, int index = 0, bool push_front = false);
 
 		void shutdown();
 
@@ -81,9 +81,9 @@ class PlayerDispatcher : public PlayerThreadHolder<PlayerDispatcher> {
 	private:
 		std::vector<std::thread> threads;
 
-		std::array<std::mutex, 10> taskLock;
-		std::array<std::condition_variable, 10> taskSignal;
-		std::array<std::list<PlayerTask*>, 10> taskList;
+		std::array<std::mutex, 6> taskLock;
+		std::array<std::condition_variable, 6> taskSignal;
+		std::array<std::list<PlayerTask*>, 6> taskList;
 		uint64_t dispatcherCycle = 0;
 };
 

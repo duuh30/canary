@@ -33,6 +33,7 @@
 #include "map/town.h"
 #include "vocations/vocation.h"
 #include "creatures/npcs/npc.h"
+#include "lua/creature/events.h"
 
 class House;
 class NetworkMessage;
@@ -45,6 +46,7 @@ class Guild;
 class Imbuement;
 class PreySlot;
 class TaskHuntingSlot;
+class Events;
 
 enum class ForgeConversion_t : uint8_t {
 	FORGE_ACTION_FUSION = 0,
@@ -2471,6 +2473,7 @@ class Player final : public Creature, public Cylinder {
 
 		std::vector<Kill> unjustifiedKills;
 
+		Events* events;
 		BedItem* bedItem = nullptr;
 		Guild* guild = nullptr;
 		GuildRank_ptr guildRank;

@@ -190,6 +190,7 @@ PRIVATE
 	game/scheduling/events_scheduler.cpp
 	game/scheduling/tasks.cpp
 	game/scheduling/player_tasks.cpp
+	game/scheduling/lua_tasks.cpp
 	io/fileloader.cpp
 	io/iobestiary.cpp
 	io/io_bosstiary.cpp

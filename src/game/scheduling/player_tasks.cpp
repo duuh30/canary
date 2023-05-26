@@ -28,16 +28,19 @@ void PlayerDispatcher::threadMain(int index) {
 			// take the first task
             PlayerTask* task = taskListThread.front();
             taskListThread.pop_front();
+            taskLockUnique.unlock();
 
             if (!task->hasExpired()) {
+                std::thread::id this_id = std::this_thread::get_id();
+                std::cout << "thread " << this_id << " executing... | " << " by index" << index << "\n";
                 ++dispatcherCycle;
                 (*task)();
             }
 
             delete task;
+        } else {
+            taskLockUnique.unlock();
         }
-
-		taskLockUnique.unlock();
     }
 }
 

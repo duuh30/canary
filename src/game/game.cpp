@@ -26,6 +26,7 @@
 #include "lua/creature/movement.h"
 #include "game/scheduling/scheduler.h"
 #include "game/scheduling/player_tasks.h"
+#include "game/scheduling/lua_tasks.h"
 #include "server/server.h"
 #include "creatures/combat/spells.h"
 #include "lua/creature/talkaction.h"
@@ -269,6 +270,7 @@ void Game::setGameState(GameState_t newState) {
 			g_scheduler().stop();
 			g_databaseTasks().stop();
 			g_dispatcher().stop();
+			g_luaDispatcher().stop();
 			g_playerDispatcher().stop();
 			break;
 		}
@@ -1084,8 +1086,7 @@ void Game::playerMoveCreature(Player* player, Creature* movingCreature, const Po
 
 		movingCreature->setLastPosition(movingCreature->getPosition());
 	}
-
-	if (!g_events().eventPlayerOnMoveCreature(player, movingCreature, movingCreaturePos, toPos)) {
+	if (player->events->eventPlayerOnMoveCreature(player, movingCreature, movingCreaturePos, toPos)) {
 		return;
 	}
 
@@ -1380,7 +1381,7 @@ void Game::playerMoveItem(Player* player, const Position &fromPos, uint16_t item
 		return;
 	}
 
-	if (!g_events().eventPlayerOnMoveItem(player, item, count, fromPos, toPos, fromCylinder, toCylinder)) {
+	if (player->events->eventPlayerOnMoveItem(player, item, count, fromPos, toPos, fromCylinder, toCylinder)) {
 		return;
 	}
 
@@ -6720,6 +6721,7 @@ void Game::shutdown() {
 	g_scheduler().shutdown();
 	g_databaseTasks().shutdown();
 	g_dispatcher().shutdown();
+	g_luaDispatcher().shutdown();
 	g_playerDispatcher().shutdown();
 	map.spawnsMonster.clear();
 	map.spawnsNpc.clear();

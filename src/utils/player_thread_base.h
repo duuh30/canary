@@ -11,8 +11,10 @@ public:
 
     void start(int numThreads) {
         setState(THREAD_STATE_RUNNING);
-        for (int i = 0; i < numThreads; ++i) {
-            threads.emplace_back(&Derived::threadMain, static_cast<Derived*>(this), i);
+        threads.resize(numThreads);
+
+        for (size_t i = 0; i < threads.size(); ++i) {
+            threads[i] = std::thread(&Derived::threadMain, static_cast<Derived*>(this), i);
         }
     }
 
@@ -21,7 +23,7 @@ public:
     }
 
     void join() {
-        for (std::thread& thread : threads) {
+        for (auto &thread : threads) {
             if (thread.joinable()) {
                 thread.join();
             }
