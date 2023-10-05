@@ -26,6 +26,45 @@ uint64_t Scheduler::addEvent(uint32_t delay, std::function<void(void)> f, std::s
 	return addEvent(std::make_shared<Task>(std::move(f), std::move(context), delay));
 }
 
+uint64_t Scheduler::addSpawnEvent(uint32_t delay, std::function<void(void)> f, std::string context) {
+	return addSpawnEvent(std::make_shared<Task>(std::move(f), std::move(context), delay));
+}
+
+uint64_t Scheduler::addSpawnEvent(const std::shared_ptr<Task> task) {
+	std::cout << "Add Spawn Event" << std::endl;
+	if (task->getEventId() == 0) {
+		task->setEventId(++lastEventId);
+	}
+
+	threadPool.addLoad([this, task]() {
+		std::cout << "Executing Spawn Event" << std::endl;
+		std::lock_guard lockAdd(threadSafetySpawnMutex);
+		auto [item, wasAdded] = eventIds.try_emplace(task->getEventId(), threadPool.getIoContext());
+
+		asio::steady_timer &timer = item->second;
+		timer.expires_from_now(std::chrono::milliseconds(task->getDelay()));
+
+		timer.async_wait([this, task](const asio::error_code &error) {
+			std::lock_guard lockAsyncCallback(threadSafetySpawnMutex);
+			eventIds.erase(task->getEventId());
+
+			if (error == asio::error::operation_aborted || threadPool.getIoContext().stopped()) {
+				return;
+			}
+
+			if (task->hasTraceableContext()) {
+				g_logger().trace("Dispatching scheduled task {}.", task->getContext());
+			} else {
+				g_logger().debug("Dispatching scheduled task {}.", task->getContext());
+			}
+
+			(*task)();
+		});
+	});
+
+	return task->getEventId();
+}
+
 uint64_t Scheduler::addEvent(const std::shared_ptr<Task> task) {
 	if (task->getEventId() == 0) {
 		task->setEventId(++lastEventId);

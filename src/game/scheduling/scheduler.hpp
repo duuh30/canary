@@ -31,11 +31,17 @@ public:
 
 	uint64_t addEvent(uint32_t delay, std::function<void(void)> f, std::string context);
 	uint64_t addEvent(const std::shared_ptr<Task> task);
+
+	uint64_t addSpawnEvent(const std::shared_ptr<Task> task);
+	uint64_t addSpawnEvent(uint32_t delay, std::function<void(void)> f, std::string context);
+
 	void stopEvent(uint64_t eventId);
 
 private:
 	ThreadPool &threadPool;
 	std::mutex threadSafetyMutex;
+	std::mutex threadSafetySpawnMutex;
+
 	std::atomic<uint64_t> lastEventId { 0 };
 	phmap::flat_hash_map<uint64_t, asio::steady_timer> eventIds;
 };

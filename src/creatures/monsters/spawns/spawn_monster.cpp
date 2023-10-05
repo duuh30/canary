@@ -13,11 +13,13 @@
 #include "game/game.hpp"
 #include "creatures/monsters/monster.hpp"
 #include "game/scheduling/scheduler.hpp"
+#include "game/scheduling/dispatcher.hpp"
 #include "game/scheduling/events_scheduler.hpp"
 #include "lua/creature/events.hpp"
 #include "lua/callbacks/event_callback.hpp"
 #include "lua/callbacks/events_callbacks.hpp"
 #include "utils/pugicast.hpp"
+#include <lib/thread/thread_pool.hpp>
 
 static constexpr int32_t MONSTER_MINSPAWN_INTERVAL = 1000; // 1 second
 static constexpr int32_t MONSTER_MAXSPAWN_INTERVAL = 86400000; // 1 day
@@ -143,7 +145,7 @@ bool SpawnsMonster::isInZone(const Position &centerPos, int32_t radius, const Po
 
 void SpawnMonster::startSpawnMonsterCheck() {
 	if (checkSpawnMonsterEvent == 0) {
-		checkSpawnMonsterEvent = g_scheduler().addEvent(getInterval(), std::bind(&SpawnMonster::checkSpawnMonster, this), "SpawnMonster::checkSpawnMonster");
+		checkSpawnMonsterEvent = g_scheduler().addSpawnEvent(getInterval(), std::bind(&SpawnMonster::checkSpawnMonster, this), "SpawnMonster::checkSpawnMonster");
 	}
 }
 
@@ -227,7 +229,11 @@ void SpawnMonster::checkSpawnMonster() {
 			}
 
 			if (sb.monsterType->info.isBlockable) {
-				spawnMonster(spawnMonsterId, sb.monsterType, sb.pos, sb.direction);
+				auto spawnMonsterFunction = [this, spawnMonsterId, sb]() {
+					spawnMonster(spawnMonsterId, sb.monsterType, sb.pos, sb.direction, false);
+				};
+
+				g_scheduler().addEvent(100, spawnMonsterFunction, "SpawnMonster::SpawnMonster");
 			} else {
 				scheduleSpawn(spawnMonsterId, sb, 3 * NONBLOCKABLE_SPAWN_MONSTER_INTERVAL);
 			}
@@ -239,16 +245,22 @@ void SpawnMonster::checkSpawnMonster() {
 	}
 
 	if (spawnedMonsterMap.size() < spawnMonsterMap.size()) {
-		checkSpawnMonsterEvent = g_scheduler().addEvent(getInterval(), std::bind(&SpawnMonster::checkSpawnMonster, this), "SpawnMonster::checkSpawnMonster");
+		checkSpawnMonsterEvent = g_scheduler().addSpawnEvent(getInterval(), std::bind(&SpawnMonster::checkSpawnMonster, this), "SpawnMonster::checkSpawnMonster");
 	}
 }
 
 void SpawnMonster::scheduleSpawn(uint32_t spawnMonsterId, spawnBlock_t &sb, uint16_t interval) {
 	if (interval <= 0) {
-		spawnMonster(spawnMonsterId, sb.monsterType, sb.pos, sb.direction);
+		auto spawnMonsterFunction = [this, spawnMonsterId, sb]() {
+			spawnMonster(spawnMonsterId, sb.monsterType, sb.pos, sb.direction, false);
+		};
+
+		g_scheduler().addEvent(100, spawnMonsterFunction, "SpawnMonster::SpawnMonster");
 	} else {
-		g_game().addMagicEffect(sb.pos, CONST_ME_TELEPORT);
-		g_scheduler().addEvent(1400, std::bind(&SpawnMonster::scheduleSpawn, this, spawnMonsterId, sb, interval - NONBLOCKABLE_SPAWN_MONSTER_INTERVAL), "SpawnMonster::scheduleSpawn");
+		g_dispatcher().addTask([this, sb]() {
+			g_game().addMagicEffect(sb.pos, CONST_ME_TELEPORT);
+		}, "Game::addSpawnEventMagicEffect");
+		g_scheduler().addSpawnEvent(1400, std::bind(&SpawnMonster::scheduleSpawn, this, spawnMonsterId, sb, interval - NONBLOCKABLE_SPAWN_MONSTER_INTERVAL), "SpawnMonster::scheduleSpawn");
 	}
 }
 
