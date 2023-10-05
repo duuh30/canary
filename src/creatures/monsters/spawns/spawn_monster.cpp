@@ -259,7 +259,8 @@ void SpawnMonster::scheduleSpawn(uint32_t spawnMonsterId, spawnBlock_t &sb, uint
 	} else {
 		g_dispatcher().addTask([this, sb]() {
 			g_game().addMagicEffect(sb.pos, CONST_ME_TELEPORT);
-		}, "Game::addSpawnEventMagicEffect");
+		},
+							   "Game::addSpawnEventMagicEffect");
 		g_scheduler().addSpawnEvent(1400, std::bind(&SpawnMonster::scheduleSpawn, this, spawnMonsterId, sb, interval - NONBLOCKABLE_SPAWN_MONSTER_INTERVAL), "SpawnMonster::scheduleSpawn");
 	}
 }
